@@ -1,0 +1,292 @@
+/* ==========================================================================
+   Survive — the survival sim. The mode where the stakes are emotional,
+   so the typography does the heavy lifting and the chrome stays calm.
+   Clay (not red) for pressure events, forest for stabilization, sand
+   cards for the choices.
+   ========================================================================== */
+
+.survive-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.survive-intro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  padding: 24px 8px;
+}
+
+/* Title — Playfair, the editorial weight. */
+.survive-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: 8px;
+}
+
+.survive-blurb {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--ink-soft);
+  max-width: 34ch;
+  line-height: 1.55;
+}
+
+.survive-disclaimer {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin-top: 8px;
+  max-width: 36ch;
+  line-height: 1.6;
+}
+
+.survive-real {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 8px;
+}
+
+/* Primary CTA — clay fill, cream text. The "begin" button uses clay
+   because Survive is the pressured, mortality-tinged mode. No pulse,
+   no neon. 6px radius. */
+.survive-start {
+  background: var(--magenta);
+  color: var(--cream);
+  padding: 14px 26px;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.98rem;
+  letter-spacing: 0.02em;
+  margin-top: 12px;
+  box-shadow: 0 4px 14px var(--magenta-glow);
+  transition:
+    transform 0.15s var(--ease-snap),
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.survive-start:hover {
+  background: #a04a31;
+  box-shadow: 0 6px 20px var(--magenta-glow);
+}
+
+.survive-start:active {
+  transform: scale(0.97);
+}
+
+/* "Back to intro" — a quiet text-link. */
+.survive-restart-text {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  margin-top: 8px;
+  transition: color 0.2s ease;
+}
+
+.survive-restart-text:hover { color: var(--ink-soft); }
+
+/* --- live run --- */
+.survive-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.survive-species {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.survive-species-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.survive-season {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
+
+.survive-popbar {
+  margin-bottom: 24px;
+}
+
+.survive-popbar-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+
+/* Population track — slightly thicker than the time bar, still a
+   capsule end-cap (not a pill). */
+.survive-popbar-track {
+  height: 8px;
+  background: var(--bg-raised);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.survive-popbar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s var(--ease-out), background 0.4s ease;
+}
+
+/* The pressure card — clay-bordered sand surface. The "PRESSURE
+   INCOMING" eyebrow inside is colored clay to telegraph trouble. */
+.survive-event {
+  background: var(--bg-raised);
+  border: 1px solid var(--magenta);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 20px;
+  position: relative;
+  box-shadow: 0 4px 18px rgba(184, 85, 58, 0.10);
+  animation: float-up 0.3s var(--ease-out);
+}
+
+.survive-event-text {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-top: 8px;
+}
+
+.survive-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Each choice row — outlined card, sand on hover, forest border on
+   hover to suggest "this is what you'd choose". */
+.survive-choice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-base);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.35;
+  transition:
+    transform 0.1s var(--ease-snap),
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.survive-choice:hover {
+  border-color: var(--forest);
+  background: var(--bg-raised);
+}
+
+.survive-choice:active {
+  transform: scale(0.98);
+}
+
+.survive-choice-marker {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+
+/* After-action result — sand surface, generous padding, the one-line
+   delta sits up top in forest or clay. */
+.survive-result {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(26, 60, 42, 0.05);
+  animation: float-up 0.3s var(--ease-out);
+}
+
+.survive-result-delta {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+
+.survive-result-note {
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+/* Next-season button — outlined ink, fills on hover. 6px radius. */
+.survive-next {
+  background: transparent;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  padding: 10px 22px;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.1s var(--ease-snap);
+}
+
+.survive-next:hover {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.survive-next:active { transform: scale(0.97); }

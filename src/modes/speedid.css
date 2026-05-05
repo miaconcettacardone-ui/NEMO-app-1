@@ -1,0 +1,226 @@
+/* ==========================================================================
+   Speed-ID — flash-card identification under the clock. The page should
+   feel like a working pop quiz in the back of a field guide: cream paper,
+   clear hierarchy, a single forest button as the call to action. No
+   glowing timers, no neon, no pill buttons.
+   ========================================================================== */
+
+.speedid-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+/* --- Intro / Game-over screen --- */
+.speedid-intro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 8px;
+  gap: 14px;
+}
+
+/* Title — Playfair, the editorial centerpiece. */
+.speedid-title {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: 8px;
+}
+
+.speedid-blurb {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--ink-soft);
+  max-width: 32ch;
+  line-height: 1.55;
+}
+
+.speedid-best {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Primary CTA — forest fill, cream text, soft warm shadow. No pulse,
+   no neon. The 6px radius is the brand's standard for action buttons. */
+.speedid-start {
+  margin-top: 16px;
+  background: var(--forest);
+  color: var(--cream);
+  padding: 14px 26px;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.98rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 14px var(--acid-glow);
+  transition:
+    transform 0.15s var(--ease-snap),
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.speedid-start:hover {
+  background: var(--forest-deep);
+  box-shadow: 0 6px 20px var(--acid-glow);
+}
+
+.speedid-start:active {
+  transform: scale(0.97);
+}
+
+.speedid-final {
+  margin: 16px 0 8px;
+}
+
+/* Big number — forest, no neon glow, just weight and color. */
+.speedid-final-num {
+  font-family: var(--font-display);
+  font-size: 5.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--forest);
+  letter-spacing: -0.04em;
+}
+
+.speedid-final-label {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 4px;
+}
+
+/* --- Live run --- */
+.speedid-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+}
+
+.speedid-score { color: var(--ink-soft); }
+.speedid-time { font-weight: 700; color: var(--ink); }
+
+/* Time bar — a thin progress strip. Stays softly rounded at 2px since
+   it's only 4px tall (the radius reads as a capsule end-cap, not a
+   pill button). */
+.speedid-timebar {
+  height: 4px;
+  background: var(--bg-raised);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.speedid-timebar-fill {
+  height: 100%;
+  transition: width 0.1s linear, background 0.4s ease;
+}
+
+/* The prompt card — sand surface, soft warm shadow underneath like a
+   field-guide page. */
+.speedid-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(26, 60, 42, 0.06);
+  animation: pop 0.25s var(--ease-out);
+}
+
+.speedid-meta {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--ink-faint);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: flex;
+  gap: 8px;
+}
+
+/* Choice grid — 2x2 of clean outlined buttons, sand on hover. */
+.speedid-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.speedid-choice {
+  background: var(--bg-base);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  padding: 16px 14px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink);
+  text-align: center;
+  transition:
+    transform 0.1s var(--ease-snap),
+    border-color 0.2s ease,
+    background 0.2s ease;
+  min-height: 60px;
+}
+
+.speedid-choice:hover:not(:disabled) {
+  border-color: var(--forest);
+  background: var(--bg-raised);
+}
+
+.speedid-choice:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Correct answer reveal — forest fill, cream text. No neon glow, just
+   a warm forest shadow. */
+.speedid-choice.is-correct {
+  background: var(--forest);
+  color: var(--cream);
+  border-color: var(--forest);
+  box-shadow: 0 4px 14px var(--acid-glow);
+  animation: pop 0.3s var(--ease-out);
+}
+
+.speedid-choice.is-dim {
+  opacity: 0.35;
+}
+
+.speedid-choice:disabled {
+  cursor: default;
+}
+
+/* Feedback line — small, colored text. No glow. */
+.speedid-feedback {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 12px;
+  letter-spacing: 0.02em;
+  animation: float-up 0.25s var(--ease-out);
+}
+
+.speedid-feedback--right { color: var(--forest); }
+.speedid-feedback--wrong { color: var(--magenta); }

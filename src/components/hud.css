@@ -1,0 +1,148 @@
+/* ==========================================================================
+   HUD — sticky top header. Field-journal masthead, not mission control.
+   ========================================================================== */
+
+.hud {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  /* Cream with slight transparency + blur lets content scroll subtly under */
+  background: rgba(250, 248, 244, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 16px 12px;
+}
+
+.hud-row {
+  display: flex;
+  align-items: center;
+}
+
+.hud-row--top {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.hud-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* The "▶" used to be a pulsing acid-green play glyph; now it's a small
+   amber dot — quiet, warm, doesn't beg for attention. */
+.hud-logo {
+  color: var(--amber);
+  font-size: 0.55rem;
+  letter-spacing: -0.05em;
+  transform: translateY(-3px);
+  display: inline-block;
+}
+
+/* Wordmark in Playfair — the only place all-caps is OK because brand
+   names in editorial design are routinely set in caps. */
+.hud-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0;
+  color: var(--forest);
+}
+
+.hud-x {
+  color: var(--amber);
+  margin-left: 2px;
+  font-style: italic;
+}
+
+/* Streak chip — sand background, soft border, rounded (not pill).
+   Style guide: "never fully pill-shaped." */
+.hud-streak {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.hud-streak-flame {
+  color: var(--amber);
+  font-size: 0.75rem;
+}
+
+.hud-streak-num {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.hud-row--meters {
+  gap: 14px;
+}
+
+.hud-meter {
+  flex: 1;
+  min-width: 0;
+}
+
+.hud-meter-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  gap: 6px;
+}
+
+/* Rank label — Playfair to match the field-journal feel */
+.hud-rank {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+
+/* Meter track — sand. Subtle inner shadow gives a "well" feel without
+   needing a heavy border. */
+.hud-meter-bar {
+  height: 5px;
+  background: var(--bg-raised);
+  border-radius: 100px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(26, 26, 26, 0.06);
+}
+
+.hud-meter-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 0.6s var(--ease-out);
+}
+
+/* XP fill — forest. No glow (we're not a mission control). */
+.hud-meter-fill--xp {
+  background: var(--forest);
+}
+
+/* Bio fill inherits its color from the inline style. */
+.hud-meter-fill--bio {
+  /* No glow — inline color comes from JS based on biosphere health */
+}
+
+.hud-meter-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+}

@@ -1,0 +1,73 @@
+/* ==========================================================================
+   Toasts — center-screen pop-ins. Designed to feel like a stamp pressed
+   into a field journal: warm sand background, soft warm shadow, amber
+   or sage accent depending on type.
+   ========================================================================== */
+
+.toast-layer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 200;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.toast {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 18px 26px;
+  text-align: center;
+  min-width: 220px;
+  box-shadow: 0 12px 32px rgba(26, 60, 42, 0.14);
+  animation: toastEnter 0.4s var(--ease-snap), toastExit 0.4s var(--ease-out) 2s forwards;
+}
+
+/* Level-up toast — amber accent (the "achievement" color) */
+.toast--level {
+  border-left: 3px solid var(--amber);
+}
+
+.toast--level .toast-title {
+  color: var(--forest);
+  font-family: var(--font-display);
+}
+
+/* Discovery toast — sage accent (information / new species) */
+.toast--discovery {
+  border-left: 3px solid var(--sage);
+}
+
+.toast--discovery .toast-title {
+  color: var(--forest);
+  font-family: var(--font-display);
+}
+
+.toast-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.toast-sub {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+@keyframes toastEnter {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes toastExit {
+  to { opacity: 0; transform: scale(0.96) translateY(-8px); }
+}

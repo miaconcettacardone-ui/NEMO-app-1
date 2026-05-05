@@ -1,0 +1,137 @@
+/* ==========================================================================
+   Onboarding — first impression. Editorial cover-of-the-field-guide feel.
+   ========================================================================== */
+
+.onboarding {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+  overflow: hidden;
+}
+
+/* Subtle warm wash — replaces the dark/neon radial gradients.
+   Two very soft amber and sage tints that suggest sun-through-canopy
+   without ever calling attention to themselves. */
+.onboarding::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(212, 145, 59, 0.10), transparent 55%),
+    radial-gradient(circle at 85% 85%, rgba(124, 154, 114, 0.10), transparent 55%);
+  pointer-events: none;
+}
+
+/* `.onboarding-noise` is still rendered by the JSX, so we keep the class —
+   but in the brand system it's nothing. Cream paper is the texture. */
+.onboarding-noise {
+  display: none;
+}
+
+.onboarding-content {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 48px 32px 36px;
+  gap: 22px;
+}
+
+.onboarding-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--forest);
+}
+
+.onboarding-headline {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  margin-top: 16px;
+  color: var(--ink);
+}
+
+/* The emphasis word — italic Playfair in amber. The style guide allows
+   amber as an accent for "featured content"; one italicized noun on the
+   cover is exactly that. */
+.onboarding-emph {
+  color: var(--amber);
+  font-style: italic;
+  font-weight: 700;
+}
+
+.onboarding-blurb {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  max-width: 36ch;
+  line-height: 1.55;
+}
+
+/* Mode preview row — sits between blurb and CTA, like a contents listing.
+   Sand background, sage/forest ink, no per-mode color screaming. */
+.onboarding-modes {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--forest);
+  text-align: center;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+  margin-top: auto;
+}
+
+.onboarding-modes div {
+  color: var(--ink-soft);
+}
+
+/* CTA button — primary forest button per style guide.
+   Rounded (8px), not pill. Cream text on forest. Soft warm shadow on hover.
+   No neon, no pulsing — but a gentle amber underline on hover reads as
+   "alive" without shouting. */
+.onboarding-go {
+  background: var(--forest);
+  color: var(--cream);
+  padding: 16px 28px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 14px rgba(26, 60, 42, 0.18);
+  transition:
+    transform 0.15s var(--ease-snap),
+    box-shadow 0.25s var(--ease-out),
+    background 0.2s ease;
+}
+
+.onboarding-go:hover {
+  background: var(--forest-deep);
+  box-shadow: 0 6px 20px rgba(26, 60, 42, 0.24);
+}
+
+.onboarding-go:active {
+  transform: scale(0.97);
+}
+
+.onboarding-fine {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  color: var(--ink-faint);
+  text-align: center;
+  font-style: italic;
+}

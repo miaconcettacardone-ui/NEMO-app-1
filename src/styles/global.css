@@ -1,0 +1,257 @@
+/* ==========================================================================
+   NEMO X — Global Styles (ProjectNEMO brand)
+   --------------------------------------------------------------------------
+   Aesthetic: warm, editorial, field-guide. Forest greens for anchors and
+   chrome, amber for CTAs and accents, sage for soft secondary, cream for
+   the page itself. Playfair Display for titles and anything with gravitas;
+   Source Sans 3 for everything you read or interact with. No dark mode,
+   no neon, no scan-lines, no grain — just considered warmth.
+
+   Variable names are preserved from the previous (dark/neon) iteration so
+   that downstream component CSS continues to work. The values have been
+   re-mapped onto the brand palette:
+
+     --bg-void   →  the deepest forest, used only in tiny dark accents
+     --bg-base   →  cream page background
+     --bg-raised →  sand card surface
+     --acid      →  forest (primary action — the "alive" color)
+     --cyan      →  sage (discovery, info)
+     --magenta   →  warm clay (decline / critical — never harsh red)
+     --amber     →  amber (CTAs, streak, featured)
+     --ink       →  near-black warm body text
+
+   The mapping is intentional: any component asking for "the primary
+   action color" gets forest; any component asking for "danger" gets a
+   warm clay that still belongs in a field guide.
+   ========================================================================== */
+
+:root {
+  /* Surfaces */
+  --bg-void: #0f2518;            /* Forest Deep — used only as deep accent */
+  --bg-base: #faf8f4;            /* Cream — primary page background */
+  --bg-raised: #f5f0e6;          /* Sand — cards, raised surfaces */
+  --bg-overlay: rgba(26, 60, 42, 0.06);
+  --line: rgba(26, 26, 26, 0.10);
+  --line-strong: rgba(26, 26, 26, 0.20);
+
+  /* Brand colors — variable names retained for compatibility */
+  --acid: #1a3c2a;               /* Forest — primary action */
+  --acid-glow: rgba(26, 60, 42, 0.18);
+  --cyan: #7c9a72;               /* Sage — secondary, info */
+  --cyan-glow: rgba(124, 154, 114, 0.22);
+  --magenta: #b8553a;            /* Warm clay — decline state */
+  --magenta-glow: rgba(184, 85, 58, 0.18);
+  --amber: #d4913b;              /* Amber — CTA, streak, featured */
+  --amber-glow: rgba(212, 145, 59, 0.22);
+
+  /* Direct brand aliases */
+  --forest: #1a3c2a;
+  --forest-deep: #0f2518;
+  --amber-light: #e6a84d;
+  --sage: #7c9a72;
+  --cream: #faf8f4;
+  --sand: #f5f0e6;
+  --light-bg: #f0ede6;
+  --border: #ddd8ce;
+
+  /* Conservation status — same taxonomy, brand-aligned */
+  --status-secure: #5b7d4f;      /* deeper sage */
+  --status-watch: #d4913b;       /* amber */
+  --status-decline: #b8553a;     /* clay */
+  --status-critical: #8a3a23;    /* deep clay */
+  --status-extinct: #5a5a5a;     /* muted */
+
+  /* Text — warm, never pure black */
+  --ink: #1a1a1a;
+  --ink-soft: #5a5a5a;
+  --ink-faint: rgba(26, 26, 26, 0.55);
+  --ink-ghost: rgba(26, 26, 26, 0.32);
+
+  /* Type — display = serif (Playfair), body = sans (Source Sans) */
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+
+  /* Motion — gentler than the kinetic version, still considered */
+  --ease-snap: cubic-bezier(0.34, 1.2, 0.64, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+
+  /* Layout — softer corners (style guide says 6–8px, never sharp) */
+  --radius: 6px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* No scan-lines, no grain. The cream paper is the texture. */
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--amber);
+  color: var(--bg-base);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 3px; }
+
+/* Utilities — names preserved.
+   `.mono` was previously a different font (JetBrains); now it's just
+   tighter Source Sans, used for metadata/labels. `.display` is Playfair. */
+.mono {
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* "Glow" helpers repurposed as editorial outlines + warm shadows.
+   Names preserved so existing components still work. */
+.glow-acid {
+  box-shadow:
+    0 0 0 1px var(--acid),
+    0 6px 18px var(--acid-glow);
+}
+.glow-cyan {
+  box-shadow:
+    0 0 0 1px var(--cyan),
+    0 6px 18px var(--cyan-glow);
+}
+.glow-magenta {
+  box-shadow:
+    0 0 0 1px var(--magenta),
+    0 6px 18px var(--magenta-glow);
+}
+
+.page-enter {
+  animation: pageEnter 0.45s var(--ease-out);
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Keyframes preserved by name, gentled in motion. */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px var(--amber),
+      0 4px 14px var(--amber-glow);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px var(--amber),
+      0 6px 22px var(--amber-glow),
+      0 0 0 4px rgba(212, 145, 59, 0.10);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes float-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ticker {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes pop {
+  0% { transform: scale(0.92); opacity: 0; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* App shell */
+.app-shell {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  background: var(--bg-base);
+}
+
+@media (min-width: 720px) {
+  .app-shell {
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    box-shadow: 0 0 80px rgba(26, 60, 42, 0.06);
+  }
+}

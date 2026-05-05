@@ -1,0 +1,63 @@
+/* ==========================================================================
+   Bottom nav — sticky bottom. Amber underline for active state per
+   style guide ("never a hard pill background").
+   ========================================================================== */
+
+.bottom-nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: rgba(250, 248, 244, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px 12px;
+  position: relative;
+  color: var(--ink-faint);
+  transition: color 0.2s var(--ease-out);
+}
+
+.nav-tab:hover {
+  color: var(--forest);
+}
+
+.nav-tab.is-active {
+  color: var(--forest);
+}
+
+/* The active state — amber underline (a soft accent dot/bar above the
+   icon, not a glowing line). Per style guide: amber underline or dot. */
+.nav-tab.is-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2px;
+  background: var(--amber);
+  border-radius: 1px;
+}
+
+.nav-icon {
+  font-size: 1.2rem;
+  font-family: var(--font-body);
+  line-height: 1;
+}
+
+.nav-label {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}

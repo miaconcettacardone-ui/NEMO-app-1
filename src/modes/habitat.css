@@ -1,0 +1,308 @@
+/* ==========================================================================
+   Habitat — the collection view. Reads like the index of a personal
+   field guide: every species you've documented gets a small card,
+   undiscovered ones show as a soft fogged silhouette. The detail
+   modal is a single page lifted off the journal.
+   ========================================================================== */
+
+.habitat-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.habitat-header {
+  margin-bottom: 16px;
+}
+
+/* Title — Playfair, with the count rendered as a small inline of-total. */
+.habitat-title {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: 6px;
+  margin-bottom: 12px;
+}
+
+.habitat-of {
+  color: var(--ink-faint);
+  font-weight: 400;
+  font-size: 1.4rem;
+  font-style: italic;
+}
+
+/* Progress bar — thin strip, forest fill. The 2px radius reads as
+   a capsule end-cap on a very slender bar; a true pill would be wrong. */
+.habitat-pctbar {
+  height: 4px;
+  background: var(--bg-raised);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.habitat-pctbar-fill {
+  height: 100%;
+  background: var(--forest);
+  transition: width 0.6s var(--ease-out);
+}
+
+.habitat-rank {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Filter chip strip — horizontal scroll. Chips are 6px-radius tags,
+   not pills. Sand on hover, forest border + soft tint when active. */
+.habitat-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.habitat-filters::-webkit-scrollbar { display: none; }
+
+.habitat-chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  background: var(--bg-base);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.habitat-chip:hover {
+  border-color: var(--forest);
+  color: var(--forest);
+}
+
+.habitat-chip.is-active {
+  border-color: var(--forest);
+  color: var(--forest);
+  background: rgba(26, 60, 42, 0.06);
+}
+
+/* Grid — two columns of small index cards. */
+.habitat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.habitat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  text-align: left;
+  gap: 6px;
+  transition:
+    transform 0.15s var(--ease-snap),
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.habitat-cell.is-found:hover {
+  border-color: var(--forest);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(26, 60, 42, 0.10);
+}
+
+.habitat-cell.is-found:active {
+  transform: scale(0.98);
+}
+
+.habitat-cell.is-locked {
+  opacity: 0.65;
+  cursor: default;
+}
+
+/* Glyph plate inside each cell — cream (lighter than the sand card),
+   so the silhouette has somewhere to sit. */
+.habitat-cell-glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: var(--bg-base);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+}
+
+/* Fog over undiscovered species — sand-tinted (forest-warm), not the
+   dark slate of the kinetic version. Reads as morning mist on the
+   journal page rather than a CRT mask. */
+.habitat-cell-fog {
+  position: absolute;
+  inset: 0;
+  background: rgba(245, 240, 230, 0.88);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--ink-ghost);
+  backdrop-filter: blur(2px);
+}
+
+.habitat-cell-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.habitat-cell-status {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Mastery bar — thin sage strip. */
+.habitat-cell-mastery {
+  height: 3px;
+  background: var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: auto;
+}
+
+.habitat-cell-mastery-fill {
+  height: 100%;
+  background: var(--sage);
+  transition: width 0.6s var(--ease-out);
+}
+
+/* ----- Detail modal -----------------------------------------------------
+   Forest-tinted backdrop (not slate). Cream card with a soft warm
+   shadow underneath. */
+.habitat-detail {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(26, 60, 42, 0.55);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  animation: float-up 0.25s var(--ease-out);
+}
+
+.habitat-detail-card {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 28px 24px 24px;
+  max-width: 420px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  box-shadow: 0 20px 60px rgba(26, 60, 42, 0.25);
+}
+
+.habitat-detail-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-base);
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.habitat-detail-close:hover {
+  background: var(--bg-raised);
+  color: var(--ink);
+  border-color: var(--ink-soft);
+}
+
+.habitat-detail-name {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: 12px;
+}
+
+.habitat-detail-sci {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.habitat-detail-hook {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--forest);
+  font-size: 1.05rem;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.habitat-detail-long {
+  font-family: var(--font-body);
+  color: var(--ink-soft);
+  line-height: 1.55;
+  text-align: left;
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+.habitat-detail-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  width: 100%;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--ink-faint);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: left;
+}

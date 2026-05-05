@@ -1,0 +1,279 @@
+/* ==========================================================================
+   Swipe — the primary mode. Each card is a single index card from the
+   field guide: a glyph plate at the top, then meta + name + hook + body.
+   Drag left to skip, drag right to document.
+   ========================================================================== */
+
+.swipe-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.swipe-eyebrow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.swipe-eyebrow-right {
+  color: var(--ink-faint);
+}
+
+.swipe-stack {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+}
+
+/* The card itself — sand surface (not pure cream, so it stands off the
+   page), 1px warm border, soft warm shadow underneath. The shadow gives
+   the field-guide-page lift. */
+.swipe-card {
+  position: absolute;
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  box-shadow: 0 8px 28px rgba(26, 60, 42, 0.10);
+}
+
+.swipe-card--top:active {
+  cursor: grabbing;
+}
+
+.swipe-card--peek {
+  transform: scale(0.96) translateY(8px);
+  opacity: 0.55;
+  pointer-events: none;
+  /* No blur — blur reads as glitchy here. Just opacity + scale. */
+}
+
+/* Glyph plate — cream background (lighter than the card), with a very
+   subtle sage tint via radial gradient and warm hairline grid that reads
+   like the lines on a naturalist's page rather than scan-lines. */
+.swipe-card-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 60%, rgba(124, 154, 114, 0.10), transparent 70%),
+    var(--bg-base);
+  padding: 24px;
+  height: 320px;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hairline grid — replaces the dark scan-lines. Very faint warm ink lines
+   on cream, like the ruled paper of a journal. */
+.swipe-card-glyph::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 23px,
+    rgba(26, 26, 26, 0.04) 23px,
+    rgba(26, 26, 26, 0.04) 24px
+  );
+  pointer-events: none;
+}
+
+.swipe-card-body {
+  padding: 18px 20px 22px;
+}
+
+.swipe-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+/* Status chip — small, font-body, soft border. NOT pill-shaped. */
+.swipe-status {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  border: 1px solid;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.swipe-biome {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* "Seen N times" pill — sage-bordered, no glow */
+.swipe-seen {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--sage);
+  border: 1px solid var(--sage);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Species name — Playfair, the editorial centerpiece */
+.swipe-name {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+/* Scientific name — Playfair italic, like a real field guide */
+.swipe-sci {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+
+/* The hook — the one-line "did you know" that's the whole point of the
+   swipe. Forest text, slightly larger, just enough emphasis to draw the
+   eye without screaming. */
+.swipe-hook {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--forest);
+  margin-bottom: 12px;
+}
+
+.swipe-long {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  animation: float-up 0.3s var(--ease-out);
+}
+
+/* "Tap to learn more" — amber link, no glow on hover (just a darken). */
+.swipe-more {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--amber);
+  letter-spacing: 0.01em;
+  padding: 4px 0;
+  transition: color 0.2s ease;
+}
+
+.swipe-more:hover {
+  color: var(--amber-light);
+}
+
+/* The drag stamps — "DOCUMENT" on right swipe, "SKIP" on left. Large,
+   rotated, in brand colors. Forest border for keep, clay for skip. No
+   glowing text-shadow. */
+.swipe-stamp {
+  position: absolute;
+  top: 24px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  padding: 6px 14px;
+  border: 3px solid;
+  border-radius: 6px;
+  pointer-events: none;
+  transform: rotate(-12deg);
+  z-index: 2;
+  background: rgba(250, 248, 244, 0.85);
+}
+
+.swipe-stamp--keep {
+  right: 24px;
+  color: var(--forest);
+  border-color: var(--forest);
+}
+
+.swipe-stamp--skip {
+  left: 24px;
+  color: var(--magenta);
+  border-color: var(--magenta);
+  transform: rotate(12deg);
+}
+
+.swipe-actions {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding-top: 18px;
+  padding-bottom: 8px;
+}
+
+/* Action buttons — circular OK because they're large icon buttons, not
+   text buttons. Outlined, brand color borders, fill on hover. */
+.swipe-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  background: var(--bg-base);
+  font-family: var(--font-body);
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  transition:
+    transform 0.15s var(--ease-snap),
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.swipe-btn:active {
+  transform: scale(0.92);
+}
+
+.swipe-btn--skip {
+  color: var(--magenta);
+  border-color: var(--magenta);
+}
+
+.swipe-btn--skip:hover {
+  background: var(--magenta);
+  color: var(--cream);
+  box-shadow: 0 4px 14px var(--magenta-glow);
+}
+
+.swipe-btn--keep {
+  color: var(--forest);
+  border-color: var(--forest);
+}
+
+.swipe-btn--keep:hover {
+  background: var(--forest);
+  color: var(--cream);
+  box-shadow: 0 4px 14px var(--acid-glow);
+}

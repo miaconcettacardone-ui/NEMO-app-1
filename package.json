@@ -1,0 +1,20 @@
+{
+  "name": "nemo-x",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "NEMO X — fast, kinetic, dopamine-loop wildlife discovery. The high-energy counterpart to ProjectNEMO Field Journal.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0"
+  }
+}
