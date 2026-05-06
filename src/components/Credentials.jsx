@@ -22,14 +22,21 @@
  *     component never writes state.
  */
 
-import { CERTIFICATES, TIER_LABELS } from '../data/certificates';
+import { useState } from 'react';
+import { CERTIFICATES, TIER_LABELS as CERT_TIER_LABELS } from '../data/certificates';
 import { useGameState } from '../hooks/useGameState';
+import { READING_TIERS, TIER_LABELS as READING_TIER_LABELS, TIER_DESCRIPTIONS } from '../lib/tier';
 import './credentials.css';
 
 export function Credentials({ open, onClose }) {
   // Pull the data we need. `level` is the derived level info we show in the
-  // header; `earnedCertificates` is the grant ledger.
-  const { level, earnedCertificates } = useGameState();
+  // header; `earnedCertificates` is the grant ledger. `readingTier` and
+  // `setReadingTier` power the inline tier picker added below the header.
+  const { level, earnedCertificates, readingTier, setReadingTier } = useGameState();
+
+  // Local UI state: whether the inline tier picker is expanded. Lives here
+  // (not in useGameState) because no other component needs to know.
+  const [tierPickerOpen, setTierPickerOpen] = useState(false);
 
   // Early return BEFORE doing other work when the overlay is closed. This
   // matters for performance (we don't want to render twelve SVGs every
@@ -84,6 +91,57 @@ export function Credentials({ open, onClose }) {
           </div>
         </header>
 
+        {/* --- Reading-level picker --------------------------------------- */}
+        {/*
+          Inline tier picker. Collapsed state is a single row: "Reading
+          level: Standard · Change". Expanded state shows three buttons
+          (one per tier) inline below the row. We keep this lightweight
+          on purpose — most users set their tier during onboarding and
+          never come back here. The row is unobtrusive when collapsed.
+        */}
+        <section className="credentials-tier" aria-label="Reading level">
+          <div className="credentials-tier-row">
+            <span className="eyebrow">Reading level</span>
+            <span className="credentials-tier-current">
+              {READING_TIER_LABELS[readingTier]}
+            </span>
+            <button
+              className="credentials-tier-toggle"
+              onClick={() => setTierPickerOpen((v) => !v)}
+              aria-expanded={tierPickerOpen}
+            >
+              {tierPickerOpen ? 'Done' : 'Change'}
+            </button>
+          </div>
+
+          {tierPickerOpen && (
+            <div className="credentials-tier-options">
+              {READING_TIERS.map((t) => {
+                const isCurrent = t === readingTier;
+                return (
+                  <button
+                    key={t}
+                    className={`credentials-tier-option ${isCurrent ? 'is-current' : ''}`}
+                    onClick={() => {
+                      setReadingTier(t);
+                      // Don't auto-close — let the user see the change
+                      // applied to the label, then tap Done themselves.
+                    }}
+                    aria-pressed={isCurrent}
+                  >
+                    <div className="credentials-tier-option-label">
+                      {READING_TIER_LABELS[t]}
+                    </div>
+                    <div className="credentials-tier-option-desc">
+                      {TIER_DESCRIPTIONS[t]}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
         {/* --- Cert grid -------------------------------------------------- */}
         {/*
           Single column on phones, two columns on wider viewports. Layout is
@@ -110,7 +168,7 @@ export function Credentials({ open, onClose }) {
                 {/* Metadata strip below the art */}
                 <div className="credentials-card-meta">
                   <div className="credentials-card-tier eyebrow">
-                    {TIER_LABELS[cert.tier]}
+                    {CERT_TIER_LABELS[cert.tier]}
                   </div>
                   <div className="credentials-card-name">{cert.name}</div>
                   <div className="credentials-card-desc">{cert.description}</div>

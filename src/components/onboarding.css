@@ -24,8 +24,9 @@
   pointer-events: none;
 }
 
-/* `.onboarding-noise` is still rendered by the JSX, so we keep the class —
-   but in the brand system it's nothing. Cream paper is the texture. */
+/* `.onboarding-noise` was a holdover from the previous (kinetic) iteration.
+   The new multi-step JSX no longer renders it; the rule remains as a
+   no-op safety net in case any leftover class reference slips through. */
 .onboarding-noise {
   display: none;
 }
@@ -74,28 +75,9 @@
   line-height: 1.55;
 }
 
-/* Mode preview row — sits between blurb and CTA, like a contents listing.
-   Sand background, sage/forest ink, no per-mode color screaming. */
-.onboarding-modes {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
-  font-family: var(--font-body);
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--forest);
-  text-align: center;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  padding: 14px 0;
-  margin-top: auto;
-}
-
-.onboarding-modes div {
-  color: var(--ink-soft);
-}
+/* The .onboarding-modes block from the old splash was removed when the
+   single-screen onboarding was replaced with the multi-step flow.
+   The steps themselves are styled below. */
 
 /* CTA button — primary forest button per style guide.
    Rounded (8px), not pill. Cream text on forest. Soft warm shadow on hover.
@@ -134,4 +116,134 @@
   color: var(--ink-faint);
   text-align: center;
   font-style: italic;
+}
+
+/* ==========================================================================
+   Multi-step flow — picker screens, quiz screens, confirm screen.
+   Same paper-background-and-warm-wash treatment as the splash; the buttons
+   are the new piece. Tall, full-width, generous tap target.
+   ========================================================================== */
+
+/* Step title — slightly smaller than the editorial headline because the
+   step screens carry less ceremony than the front cover. Still Playfair. */
+.onboarding-step-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-top: 8px;
+}
+
+/* Vertical stack of buttons. gap holds them apart with breathing room. */
+.onboarding-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+  margin-bottom: 8px;
+}
+
+/* The big tappable buttons used for age, schooling, quiz answers. We
+   intentionally don't use --bg-raised (sand) here — the cream-on-cream
+   contrast was too low. Instead a forest-tinted hairline border with a
+   white-ish inner gives the "field-card" reading. */
+.onboarding-choice {
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 18px;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  transition:
+    border-color 0.18s var(--ease-out),
+    background 0.18s var(--ease-out),
+    transform 0.15s var(--ease-out);
+}
+
+.onboarding-choice:hover {
+  border-color: var(--forest);
+  background: var(--bg-raised);
+}
+
+.onboarding-choice:active {
+  transform: translateY(1px);
+}
+
+.onboarding-choice-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.onboarding-choice-sub {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+
+/* Confirm screen — the paragraph between the blurb and the CTA explaining
+   that the tier can be changed later. Smaller than the blurb, italicized,
+   amber-ish to feel like a margin note. */
+.onboarding-tier-note {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--amber);
+  border-left: 2px solid var(--amber);
+  padding: 6px 0 6px 12px;
+}
+
+/* Override row at the bottom of the confirm screen. Plain text label and
+   a row of small buttons for the other two tiers. Soft visual weight —
+   we want most users to take the suggested tier. */
+.onboarding-override {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onboarding-override-label {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+}
+
+.onboarding-override-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.onboarding-override-btn {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+  transition:
+    border-color 0.18s var(--ease-out),
+    background 0.18s var(--ease-out),
+    transform 0.15s var(--ease-out);
+}
+
+.onboarding-override-btn:hover {
+  border-color: var(--forest);
+  background: var(--bg-raised);
+}
+
+.onboarding-override-btn:active {
+  transform: translateY(1px);
 }

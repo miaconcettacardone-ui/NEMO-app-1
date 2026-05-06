@@ -41,6 +41,10 @@ import { SPECIES } from '../data/species';
 // evaluator after state changes and grants any newly-true certs.
 import { evaluateCertificates } from '../data/certificates';
 
+// Tier helpers — used by the setReadingTier action below to reject any
+// invalid tier value coming from older saves or a bad call site.
+import { isValidTier } from '../lib/tier';
+
 /**
  * The shape of game state. Documented here so it's easy to see what fields
  * exist without having to read every action function.
@@ -73,6 +77,11 @@ import { evaluateCertificates } from '../data/certificates';
  *                        Persists across sessions so cumulative play affects
  *                        the world (we may revisit this — soft reset between
  *                        sessions could be the right move once playtested).
+ *   readingTier:         'simple' | 'standard' | 'expert' — controls which
+ *                        version of player-facing copy is shown across the
+ *                        whole app. Set during onboarding and adjustable
+ *                        afterwards from the Credentials surface. See
+ *                        src/lib/tier.js for the picker semantics.
  *   onboarded:           boolean — has the user finished the intro flow?
  */
 const initialState = {
@@ -100,6 +109,7 @@ const initialState = {
     prosperity: 70,
     biosphere: 70,
   },
+  readingTier: 'standard',
   onboarded: false,
 };
 
@@ -562,6 +572,28 @@ export function GameStateProvider({ children }) {
   );
 
   /**
+   * setReadingTier — set which copy tier the app renders.
+   *
+   * @param tier — 'simple' | 'standard' | 'expert'.
+   *
+   * We validate the tier through isValidTier so a stray value (from a
+   * malformed save, a corrupted localStorage write, or a mistyped call
+   * site) silently no-ops instead of crashing the renderer. Quietly
+   * refusing a bad value is correct here; the player's tier should never
+   * be the thing that breaks the app.
+   */
+  const setReadingTier = useCallback(
+    (tier) => {
+      if (!isValidTier(tier)) return;
+      updateState((s) => {
+        s.readingTier = tier;
+        return s;
+      });
+    },
+    [updateState],
+  );
+
+  /**
    * markOnboarded — called when the user finishes the onboarding flow.
    * Flips the flag and bumps the session count.
    */
@@ -611,6 +643,11 @@ export function GameStateProvider({ children }) {
     sandDollars: state.sandDollars ?? 0,
     earnedCertificates: state.earnedCertificates ?? {},
     world: state.world ?? { biodiversity: 70, climate: 70, prosperity: 70, biosphere: 70 },
+    // Tier defaults to standard for any save that predates this commit. Old
+    // copy is plain-string anyway, so the picker behaves correctly with
+    // either value — but standard reads as a sensible "middle of the road"
+    // default if the user never sets one.
+    readingTier: isValidTier(state.readingTier) ? state.readingTier : 'standard',
     stats: {
       swipes: 0,
       ids: 0,
@@ -635,6 +672,7 @@ export function GameStateProvider({ children }) {
     applyWorldEffects,
     resetWorld,
     recordExploreSessionComplete,
+    setReadingTier,
     markOnboarded,
     reset,
   };
