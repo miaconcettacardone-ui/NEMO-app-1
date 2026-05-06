@@ -1,11 +1,40 @@
+/**
+ * useGameState.jsx — the central nervous system of the app.
+ *
+ * This file owns all the game state that needs to survive across modes and
+ * page reloads: how much XP the player has, which species they've collected,
+ * their daily streak, the global biosphere meter, and various stats.
+ *
+ * It uses a React pattern called "Context" to share that state with every
+ * component in the app without having to pass it as props through every layer.
+ *
+ * HOW IT WORKS:
+ *   1. <GameStateProvider> wraps the whole app (see App.jsx).
+ *   2. Inside the provider, we keep state in a useLocalStorage hook so it
+ *      persists across reloads.
+ *   3. The provider exposes both the state values AND a set of functions
+ *      ("actions") that mutate the state — recordSwipe, recordQuiz, etc.
+ *   4. Any descendant component calls useGameState() to grab whatever it needs.
+ *
+ * Think of this file as a tiny in-app database. Components don't write to
+ * state directly; they call action functions, and those functions know how
+ * to update the state correctly.
+ */
+
+// React context lets us share data across the component tree without prop drilling.
+//   - createContext: makes a new context "channel"
+//   - useContext: subscribes a component to that channel
+//   - useMemo: caches a computed value so it only recomputes when its inputs change
+//   - useCallback: caches a function reference so child components don't re-render
+//                  every time the parent re-renders (referential stability)
 import { createContext, useContext, useMemo, useCallback } from 'react';
+
+// Our own custom hook for state that persists to localStorage.
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
 /**
- * GameStateContext
- * ----------------
- * Single source of truth for all persistent player state. All game modes
- * (Swipe, Speed-ID, Trivia, Survival) read from and write to this context.
+ * The shape of game state. Documented here so it's easy to see what fields
+ * exist without having to read every action function.
  *
  * State shape:
  *   xp:          number — total XP earned, drives "Field Level"
@@ -13,12 +42,13 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
  *   collected:   { [speciesId]: { firstSeenAt, encounters, mastery } }
  *                mastery rises with correct quiz answers; powers the
  *                "fully documented" milestone shown in the Habitat view.
- *   survival:    number 0–100 — represents the global ecosystem health
- *                meter. Lost answers in Survival mode tick this down.
- *   stats:       { swipes, ids, quizCorrect, quizWrong, sessions }
- *   onboarded:   boolean — has the user seen the intro pulse?
+ *   survival:    number 0–100 — represents the global biosphere meter.
+ *                Wrong answers in Quiz tick this down; right answers tick
+ *                it up. The Survive mode also reads/writes it.
+ *   stats:       running totals across all play sessions, useful for
+ *                certificate predicates and the eventual stats screen.
+ *   onboarded:   boolean — has the user finished the intro flow?
  */
-
 const initialState = {
   xp: 0,
   streak: { count: 0, lastDay: null },
@@ -35,17 +65,25 @@ const initialState = {
   onboarded: false,
 };
 
+// Create the context. The argument (`null` here) is the default value used
+// only when a component calls useGameState() OUTSIDE of a <GameStateProvider>.
+// We never want that to happen, so the value here doesn't really matter — our
+// useGameState() hook below throws an error in that case.
 const GameStateContext = createContext(null);
 
 // --- Level curve ---------------------------------------------------------
-// Levels scale gradually so the early-game feels rewarding and later levels
-// feel earned. Mirrors the "Scout → Field Observer → Researcher → ..."
-// taxonomy from the Field Journal but with shorter, punchier rank names
-// suitable for a HUD.
+//
+// XP thresholds for each level. Index 0 = level 1 (Rookie, 0 XP), index 1 =
+// level 2 (Tracker, 50 XP), and so on. The curve is gradual at the start so
+// new players feel constant progress, and steeper later so high levels feel
+// earned. Tuning these numbers is one of the levers we'll pull when balancing
+// the points economy.
 const LEVEL_THRESHOLDS = [
   0, 50, 150, 350, 700, 1200, 2000, 3200, 5000, 8000,
 ];
 
+// Names for each level. Keeps the field-guide voice — these are real-ish
+// scientific roles, not generic gamer ranks like "Bronze" or "Platinum."
 const LEVEL_NAMES = [
   'Rookie',
   'Tracker',
@@ -59,16 +97,37 @@ const LEVEL_NAMES = [
   'Archivist',
 ];
 
+/**
+ * Given a player's XP, figure out:
+ *   - what level they're at
+ *   - what the level is called
+ *   - how much progress they've made toward the next level (0–1)
+ *   - how much XP until next level
+ *   - whether they've hit the cap (no more levels above)
+ *
+ * Exported because the Onboarding component (and others) want to display
+ * level info without going through the full context.
+ */
 export function levelFromXP(xp) {
+  // Walk through the thresholds and find the highest one we've passed.
   let level = 0;
   for (let i = 0; i < LEVEL_THRESHOLDS.length; i++) {
     if (xp >= LEVEL_THRESHOLDS[i]) level = i;
   }
+
+  // Where the current level starts in XP terms.
   const current = LEVEL_THRESHOLDS[level];
+
+  // Where the next level starts. The `??` operator returns `null` if the
+  // left side is undefined — which happens when we're at the top level and
+  // there's no entry past us in the array.
   const next = LEVEL_THRESHOLDS[level + 1] ?? null;
+
+  // Progress as a fraction (0–1). If we're at the cap, progress is "full."
   const progress = next ? (xp - current) / (next - current) : 1;
+
   return {
-    level: level + 1,
+    level: level + 1, // human-friendly: levels start at 1, not 0
     name: LEVEL_NAMES[level],
     xpInLevel: xp - current,
     xpToNext: next ? next - xp : 0,
@@ -78,29 +137,82 @@ export function levelFromXP(xp) {
 }
 
 // --- Helpers -------------------------------------------------------------
+
+/**
+ * Get today's date as 'YYYY-MM-DD' in the user's local timezone-ish
+ * representation (actually UTC date, but it's stable enough for streak
+ * tracking and avoids timezone landmines).
+ */
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Update the daily streak based on today's date and when the user last played.
+ *
+ * Three cases:
+ *   1. They already played today → no change
+ *   2. They played yesterday → streak count goes up by 1
+ *   3. They missed a day (or this is their first session) → streak resets to 1
+ */
 function tickStreak(streak) {
   const today = todayKey();
-  if (streak.lastDay === today) return streak; // already counted today
 
+  // Case 1: already counted today. Bail without changes.
+  if (streak.lastDay === today) return streak;
+
+  // Compute "yesterday" by subtracting 24 hours' worth of milliseconds from now.
+  // 86400000 = 24 * 60 * 60 * 1000.
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+  // Case 2: they played yesterday — extend the streak.
   if (streak.lastDay === yesterday) {
     return { count: streak.count + 1, lastDay: today };
   }
-  // missed a day, or first session ever
+
+  // Case 3: gap of at least one day, or first session ever. Streak starts at 1.
   return { count: 1, lastDay: today };
 }
 
 // --- Provider ------------------------------------------------------------
 
+/**
+ * GameStateProvider — wraps the app and provides game state to descendants.
+ *
+ * The `{ children }` prop is React's way of letting a component receive
+ * whatever JSX is nested inside it. So when App.jsx writes:
+ *   <GameStateProvider>
+ *     <AppShell />
+ *   </GameStateProvider>
+ * ...AppShell becomes `children` here.
+ */
 export function GameStateProvider({ children }) {
+  // The single source of truth. Everything in the app eventually reads from
+  // or writes to this. We use 'nemox-state-v1' as the storage key — the v1
+  // suffix lets us bump the schema later without breaking existing players
+  // (we'd just use a new key and migrate from the old one).
   const [state, setState] = useLocalStorage('nemox-state-v1', initialState);
 
+  /**
+   * updateState — internal helper used by every action below.
+   *
+   * Takes a "mutator" function: a function that gets a copy of current state,
+   * makes its changes, and returns the new state. We always start from a
+   * shallow copy (`{ ...prev }`) so we don't accidentally mutate the
+   * previous state object — React relies on reference identity to detect
+   * changes, and mutating in place breaks that.
+   *
+   * Wrapped in useCallback so the function reference stays stable across
+   * renders — needed because the action functions below depend on it, and
+   * if it changed every render, all of them would too, breaking
+   * referential equality for any consumer that depends on them.
+   */
   const updateState = useCallback(
     (mutator) => {
+      // setState here accepts a function. React calls our function with the
+      // most recent state and uses whatever we return as the new state. This
+      // is safer than `setState(mutator(state))` because `state` could be
+      // stale if multiple updates happen in rapid succession.
       setState((prev) => {
         const next = mutator({ ...prev });
         return next;
@@ -109,11 +221,21 @@ export function GameStateProvider({ children }) {
     [setState],
   );
 
+  /**
+   * recordSwipe — called when the user swipes a species card in Swipe mode.
+   *
+   * @param speciesId — the id of the species they swiped
+   * @param kept      — true if they swiped right (added to collection),
+   *                    false if they swiped left (passed)
+   */
   const recordSwipe = useCallback(
     (speciesId, kept) => {
       updateState((s) => {
+        // Increment the swipe counter regardless of direction.
         s.stats = { ...s.stats, swipes: s.stats.swipes + 1 };
+
         if (kept) {
+          // They swiped right — add to collection (or update existing entry).
           const existing = s.collected[speciesId];
           s.collected = {
             ...s.collected,
@@ -121,8 +243,14 @@ export function GameStateProvider({ children }) {
               ? { ...existing, encounters: existing.encounters + 1 }
               : { firstSeenAt: Date.now(), encounters: 1, mastery: 0 },
           };
-          s.xp = s.xp + (existing ? 5 : 25); // first-time bonus
+
+          // First-time discovery is worth more XP than re-encountering. This
+          // shapes player behavior: encourages exploring new species over
+          // grinding the same one repeatedly.
+          s.xp = s.xp + (existing ? 5 : 25);
         }
+
+        // Either way, the user did something today, so update the streak.
         s.streak = tickStreak(s.streak);
         return s;
       });
@@ -130,6 +258,11 @@ export function GameStateProvider({ children }) {
     [updateState],
   );
 
+  /**
+   * recordSpeedID — called when the user answers a Speed-ID round.
+   * Right answers grant XP and increase mastery on the species; wrong
+   * answers just count toward the stats.
+   */
   const recordSpeedID = useCallback(
     (speciesId, correct) => {
       updateState((s) => {
@@ -138,8 +271,12 @@ export function GameStateProvider({ children }) {
           ids: s.stats.ids + 1,
           idsCorrect: s.stats.idsCorrect + (correct ? 1 : 0),
         };
+
         if (correct) {
           s.xp = s.xp + 10;
+
+          // Bump mastery if we already have this species. Math.min ensures
+          // mastery never exceeds 100 (the "fully documented" threshold).
           const existing = s.collected[speciesId];
           if (existing) {
             s.collected = {
@@ -148,6 +285,7 @@ export function GameStateProvider({ children }) {
             };
           }
         }
+
         s.streak = tickStreak(s.streak);
         return s;
       });
@@ -155,6 +293,11 @@ export function GameStateProvider({ children }) {
     [updateState],
   );
 
+  /**
+   * recordQuiz — called when the user answers a Quiz question.
+   * Quiz mastery gains are bigger than Speed-ID (12 vs 8) because quiz
+   * questions test deeper knowledge and we want to reward that.
+   */
   const recordQuiz = useCallback(
     (speciesId, correct) => {
       updateState((s) => {
@@ -163,6 +306,7 @@ export function GameStateProvider({ children }) {
           quizCorrect: s.stats.quizCorrect + (correct ? 1 : 0),
           quizWrong: s.stats.quizWrong + (correct ? 0 : 1),
         };
+
         if (correct) {
           s.xp = s.xp + 15;
           const existing = s.collected[speciesId];
@@ -173,6 +317,7 @@ export function GameStateProvider({ children }) {
             };
           }
         }
+
         s.streak = tickStreak(s.streak);
         return s;
       });
@@ -180,6 +325,13 @@ export function GameStateProvider({ children }) {
     [updateState],
   );
 
+  /**
+   * recordSurvivalLoss / recordSurvivalGain — adjust the biosphere meter.
+   *
+   * Math.max(0, ...) and Math.min(100, ...) clamp the value to the 0–100
+   * range. The Quiz mode calls these when the player gets answers right or
+   * wrong; the Survive mode will eventually call them for events.
+   */
   const recordSurvivalLoss = useCallback(
     (amount) => {
       updateState((s) => {
@@ -200,6 +352,10 @@ export function GameStateProvider({ children }) {
     [updateState],
   );
 
+  /**
+   * markOnboarded — called when the user finishes the onboarding flow.
+   * Flips the flag and bumps the session count.
+   */
   const markOnboarded = useCallback(() => {
     updateState((s) => {
       s.onboarded = true;
@@ -208,13 +364,32 @@ export function GameStateProvider({ children }) {
     });
   }, [updateState]);
 
+  /**
+   * reset — wipes all progress. Used by a "start over" button somewhere in
+   * settings (currently no UI surface, but keeping the action ready). When
+   * we add settings, this gets a confirmation dialog and a "are you sure"
+   * before firing.
+   */
   const reset = useCallback(() => {
     setState(initialState);
   }, [setState]);
 
+  // --- Derived values ------------------------------------------------------
+  //
+  // These are computed from state rather than stored. They use useMemo so
+  // they only recompute when their inputs actually change — saves work on
+  // every render of every consumer.
+
+  // Level info derived from XP.
   const level = useMemo(() => levelFromXP(state.xp), [state.xp]);
+
+  // How many distinct species the player has collected. Object.keys gives us
+  // an array of all the species IDs in `collected`, and .length counts them.
   const collectedCount = useMemo(() => Object.keys(state.collected).length, [state.collected]);
 
+  // The full bundle that consumers will receive when they call useGameState().
+  // We spread `state` in first to get all the raw values, then add derived
+  // values and action functions on top.
   const value = {
     ...state,
     level,
@@ -228,9 +403,20 @@ export function GameStateProvider({ children }) {
     reset,
   };
 
+  // Render the context provider with our value, with `children` (the rest
+  // of the app) inside it.
   return <GameStateContext.Provider value={value}>{children}</GameStateContext.Provider>;
 }
 
+/**
+ * useGameState — the hook every component uses to read game state.
+ *
+ * Why have this wrapper instead of telling people to call useContext directly?
+ *   1. It hides the GameStateContext export so callers don't accidentally
+ *      bypass the provider.
+ *   2. It throws a clear error if called outside the provider — much better
+ *      than getting a confusing "cannot read property of null" later.
+ */
 export function useGameState() {
   const ctx = useContext(GameStateContext);
   if (!ctx) throw new Error('useGameState must be used within GameStateProvider');
