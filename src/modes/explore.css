@@ -1,0 +1,306 @@
+/* ==========================================================================
+   Explore — decision sim. Same field-journal voice as Survive:
+   cream paper, forest ink, amber where stakes matter, clay for losses.
+   No neon, no glow, 6px button radii.
+   ========================================================================== */
+
+.explore-mode {
+  padding: 18px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* --- Intro & session-end shared layout ------------------------------------ */
+
+.explore-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  gap: 14px;
+  padding: 8px 0 16px;
+}
+
+.explore-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.7rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.explore-blurb {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.explore-disclaimer {
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+.explore-start {
+  margin-top: 4px;
+  align-self: flex-start;
+  background: var(--forest);
+  color: var(--cream);
+  padding: 12px 22px;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--forest-deep);
+  transition: background 0.18s var(--ease-out), transform 0.18s var(--ease-out);
+}
+
+.explore-start:hover {
+  background: var(--forest-deep);
+}
+
+.explore-start:active {
+  transform: translateY(1px);
+}
+
+/* --- Section header (used on map / playing / result phases) --------------- */
+
+.explore-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.explore-section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.explore-chosen-label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--forest);
+  margin-top: 2px;
+}
+
+/* --- World meters --------------------------------------------------------- */
+
+.explore-meters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+}
+
+.explore-meters.is-compact {
+  padding: 10px 12px;
+  gap: 8px 12px;
+}
+
+.explore-meter {
+  min-width: 0;
+}
+
+.explore-meter-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.explore-meter-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.explore-meter-delta {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.explore-meter-bar {
+  height: 5px;
+  background: var(--bg-base);
+  border-radius: 100px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(26, 26, 26, 0.06);
+}
+
+.explore-meter-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 0.6s var(--ease-out), background 0.6s var(--ease-out);
+}
+
+/* --- Biome map (the Explore "where do I go" view) ------------------------- */
+
+.explore-biome-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.explore-biome-card {
+  text-align: left;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.2s var(--ease-out), background 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+}
+
+.explore-biome-card:hover {
+  border-color: var(--forest);
+  background: var(--cream);
+}
+
+.explore-biome-card:active {
+  transform: translateY(1px);
+}
+
+.explore-biome-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.explore-biome-blurb {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.explore-biome-arrow {
+  margin-top: auto;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--forest);
+  letter-spacing: 0.02em;
+}
+
+.explore-foot {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* --- Playing — scenario card and choices ---------------------------------- */
+
+.explore-scenario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.explore-prompt {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.explore-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.explore-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  transition: border-color 0.18s var(--ease-out), background 0.18s var(--ease-out), transform 0.15s var(--ease-out);
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.explore-choice:hover {
+  border-color: var(--forest);
+  background: var(--bg-base);
+}
+
+.explore-choice:active {
+  transform: translateY(1px);
+}
+
+.explore-choice-marker {
+  color: var(--forest);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.explore-choice-label {
+  flex: 1;
+}
+
+/* --- Result phase -------------------------------------------------------- */
+
+.explore-result-note {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.explore-result-note p {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.explore-continue {
+  align-self: flex-start;
+  background: var(--forest);
+  color: var(--cream);
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  border: 1px solid var(--forest-deep);
+  transition: background 0.18s var(--ease-out), transform 0.18s var(--ease-out);
+}
+
+.explore-continue:hover { background: var(--forest-deep); }
+.explore-continue:active { transform: translateY(1px); }

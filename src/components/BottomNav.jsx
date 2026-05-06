@@ -34,6 +34,10 @@ const TABS = [
   { id: 'quiz', label: 'Quiz', icon: '?' },
   { id: 'habitat', label: 'Habitat', icon: '⌬' },
   { id: 'survive', label: 'Survive', icon: '❋' },
+  // Explore — the systems-view sixth mode. The ◈ glyph reads as a region
+  // or territory marker, sitting comfortably alongside the abstract
+  // geometric icons of the other tabs without competing with them.
+  { id: 'explore', label: 'Explore', icon: '◈' },
 ];
 
 /**

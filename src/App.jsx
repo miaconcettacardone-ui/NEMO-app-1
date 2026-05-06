@@ -31,13 +31,16 @@ import { BottomNav } from './components/BottomNav';
 import { Onboarding } from './components/Onboarding';
 import { ToastLayer } from './components/ToastLayer';
 
-// The five gameplay modes. Each is a self-contained screen. A sixth (the world
-// simulation) is planned but not yet built.
+// The five gameplay modes. Each is a self-contained screen. A sixth — Explore —
+// is the new systems-view mode added in this commit: a Reigns-style decision
+// sim that puts the player at the policy desk where conservation tradeoffs
+// land. AGENTS.md plans for it explicitly under "World Simulation Rules."
 import { SwipeMode } from './modes/SwipeMode';
 import { SpeedIDMode } from './modes/SpeedIDMode';
 import { QuizMode } from './modes/QuizMode';
 import { HabitatMode } from './modes/HabitatMode';
 import { SurviveMode } from './modes/SurviveMode';
+import { ExploreMode } from './modes/ExploreMode';
 
 // Importing CSS files in JS is a Vite/webpack feature: Vite sees these imports
 // and bundles the CSS into the final stylesheet. The order matters —
@@ -90,6 +93,7 @@ function AppShell() {
     case 'quiz':    content = <QuizMode key="quiz" />; break;
     case 'habitat': content = <HabitatMode key="habitat" />; break;
     case 'survive': content = <SurviveMode key="survive" />; break;
+    case 'explore': content = <ExploreMode key="explore" />; break;
     // Fallback in case `mode` somehow becomes an unknown value. Defensive
     // coding — should never hit this, but if it does we don't want a blank screen.
     default:        content = <SwipeMode key="swipe" />;

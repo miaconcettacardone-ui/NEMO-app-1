@@ -59,12 +59,20 @@ import { evaluateCertificates } from '../data/certificates';
  *   survival:            number 0–100 — represents the global biosphere meter.
  *                        Wrong answers in Quiz tick this down; right answers
  *                        tick it up. The Survive mode also reads/writes it.
+ *                        Distinct from world.biosphere — that one is the
+ *                        Explore-mode local meter.
  *   stats:               running totals across all play sessions, useful for
  *                        certificate predicates and the eventual stats screen.
  *   earnedCertificates:  { [certId]: timestamp } — paper artifacts the player
  *                        has earned. Granted by a useEffect that re-runs every
  *                        certificate predicate after each state change. Once
  *                        granted, never revoked.
+ *   world:               { biodiversity, climate, prosperity, biosphere } —
+ *                        the four meters Explore mode runs against. Each is
+ *                        0–100; any meter at 0 ends the session as a loss.
+ *                        Persists across sessions so cumulative play affects
+ *                        the world (we may revisit this — soft reset between
+ *                        sessions could be the right move once playtested).
  *   onboarded:           boolean — has the user finished the intro flow?
  */
 const initialState = {
@@ -82,8 +90,16 @@ const initialState = {
     sessions: 0,
     surviveRunsWon: 0,
     surviveRunsLost: 0,
+    exploreSessionsWon: 0,
+    exploreSessionsLost: 0,
   },
   earnedCertificates: {},
+  world: {
+    biodiversity: 70,
+    climate: 70,
+    prosperity: 70,
+    biosphere: 70,
+  },
   onboarded: false,
 };
 
@@ -473,6 +489,79 @@ export function GameStateProvider({ children }) {
   );
 
   /**
+   * applyWorldEffects — apply a delta object to the four Explore world meters.
+   *
+   * Called by ExploreMode each time the player picks a choice on a scenario
+   * card. The delta object looks like:
+   *   { biodiversity: -10, climate: 0, prosperity: 6, biosphere: -4 }
+   * Missing keys are treated as 0. All four meters are clamped to [0, 100].
+   *
+   * Why an object delta rather than four separate actions? Each scenario
+   * choice typically moves several meters at once; passing one object keeps
+   * the call sites readable and makes the data model in explore.js
+   * pleasantly declarative.
+   */
+  const applyWorldEffects = useCallback(
+    (effects) => {
+      updateState((s) => {
+        const w = s.world ?? { biodiversity: 70, climate: 70, prosperity: 70, biosphere: 70 };
+        s.world = {
+          biodiversity: Math.max(0, Math.min(100, w.biodiversity + (effects.biodiversity ?? 0))),
+          climate: Math.max(0, Math.min(100, w.climate + (effects.climate ?? 0))),
+          prosperity: Math.max(0, Math.min(100, w.prosperity + (effects.prosperity ?? 0))),
+          biosphere: Math.max(0, Math.min(100, w.biosphere + (effects.biosphere ?? 0))),
+        };
+        return s;
+      });
+    },
+    [updateState],
+  );
+
+  /**
+   * resetWorld — reset the four Explore world meters to their starting values.
+   *
+   * Called by ExploreMode when the player starts a fresh session. The world
+   * meters persist across mode switches but reset between explicit Explore
+   * sessions — playtesting may push us toward "world meters never reset"
+   * (cumulative civilization sim) or "reset every time" (pure run-based);
+   * for now, reset on session start preserves both options.
+   */
+  const resetWorld = useCallback(() => {
+    updateState((s) => {
+      s.world = { biodiversity: 70, climate: 70, prosperity: 70, biosphere: 70 };
+      return s;
+    });
+  }, [updateState]);
+
+  /**
+   * recordExploreSessionComplete — log the result of one Explore session.
+   *
+   * @param won — true if all four meters ended above the win threshold,
+   *              false if any meter hit zero or finished below threshold.
+   *
+   * Same XP/SD shape as Survive: substantial for a win, modest for a loss.
+   * Explore is closer to Quiz in mental effort per minute, so we don't pay
+   * out as much per session — +40 / +10 instead of Survive's +60 / +15.
+   */
+  const recordExploreSessionComplete = useCallback(
+    (won) => {
+      updateState((s) => {
+        const reward = won ? 40 : 10;
+        s.xp = s.xp + reward;
+        s.sandDollars = s.sandDollars + reward;
+        s.stats = {
+          ...s.stats,
+          exploreSessionsWon: (s.stats.exploreSessionsWon ?? 0) + (won ? 1 : 0),
+          exploreSessionsLost: (s.stats.exploreSessionsLost ?? 0) + (won ? 0 : 1),
+        };
+        s.streak = tickStreak(s.streak);
+        return s;
+      });
+    },
+    [updateState],
+  );
+
+  /**
    * markOnboarded — called when the user finishes the onboarding flow.
    * Flips the flag and bumps the session count.
    */
@@ -521,6 +610,7 @@ export function GameStateProvider({ children }) {
     ...state,
     sandDollars: state.sandDollars ?? 0,
     earnedCertificates: state.earnedCertificates ?? {},
+    world: state.world ?? { biodiversity: 70, climate: 70, prosperity: 70, biosphere: 70 },
     stats: {
       swipes: 0,
       ids: 0,
@@ -530,6 +620,8 @@ export function GameStateProvider({ children }) {
       sessions: 0,
       surviveRunsWon: 0,
       surviveRunsLost: 0,
+      exploreSessionsWon: 0,
+      exploreSessionsLost: 0,
       ...(state.stats ?? {}),
     },
     level,
@@ -540,6 +632,9 @@ export function GameStateProvider({ children }) {
     recordSurvivalLoss,
     recordSurvivalGain,
     recordSurviveRunComplete,
+    applyWorldEffects,
+    resetWorld,
+    recordExploreSessionComplete,
     markOnboarded,
     reset,
   };
