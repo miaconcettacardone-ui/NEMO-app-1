@@ -56,27 +56,52 @@
   font-style: italic;
 }
 
-/* Streak chip — sand background, soft border, rounded (not pill).
-   Style guide: "never fully pill-shaped." */
-.hud-streak {
+/* Chip group — the two right-aligned chips in the HUD top row, sitting
+   beside one another with a small gap. Single class wrapping multiple chips
+   so we can adjust spacing globally without touching each chip. */
+.hud-chip-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Chip — sand background, soft border, 6px radius (style guide says
+   "never fully pill-shaped" for resting UI). Used for both Sand Dollars
+   and the daily streak. The mark inside is colored per-chip via the
+   `--sd` and `--streak` modifier classes. */
+.hud-chip {
   display: flex;
   align-items: center;
   gap: 6px;
   background: var(--bg-raised);
   border: 1px solid var(--line);
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   font-family: var(--font-body);
   font-size: 0.8rem;
   font-weight: 600;
 }
 
-.hud-streak-flame {
-  color: var(--amber);
+.hud-chip-mark {
   font-size: 0.75rem;
+  line-height: 1;
 }
 
-.hud-streak-num {
+/* Sand Dollars mark — sage. Reads as a coastal/coin glyph (◐) in a soft
+   field-guide color that doesn't compete with the amber streak dot. */
+.hud-chip-mark--sd {
+  color: var(--sage);
+  font-size: 0.85rem;
+  /* Tiny optical lift so the glyph baselines with the number beside it. */
+  transform: translateY(-1px);
+}
+
+/* Streak mark — amber. Same warm accent as the wordmark dot. */
+.hud-chip-mark--streak {
+  color: var(--amber);
+}
+
+.hud-chip-num {
   font-weight: 700;
   color: var(--ink);
 }

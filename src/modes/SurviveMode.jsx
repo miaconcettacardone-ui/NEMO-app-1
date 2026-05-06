@@ -204,9 +204,15 @@ function pickEventForSpecies(species, usedIds) {
 // ---------------------------------------------------------------------------
 
 export function SurviveMode() {
-  // Pull the two XP-recording functions from the central game state.
+  // Pull XP-recording functions from the central game state.
   // Using object destructuring `{ a, b }` to grab specific keys.
-  const { recordSurvivalGain, recordSurvivalLoss } = useGameState();
+  //   recordSurvivalGain / recordSurvivalLoss — adjust the global biosphere
+  //     meter shown in the HUD. Called per-event below so a single brutal
+  //     decision doesn't end the run silently.
+  //   recordSurviveRunComplete — fires exactly once per run, at the moment
+  //     the run resolves to win or loss. Grants XP + Sand Dollars and bumps
+  //     the runsWon/runsLost stats counters used by certificates.
+  const { recordSurvivalGain, recordSurvivalLoss, recordSurviveRunComplete } = useGameState();
 
   // -------- State --------
   // Each useState call creates ONE piece of state. The pattern is
@@ -283,14 +289,19 @@ export function SurviveMode() {
     setLastChoice(choice);
 
     if (newPop <= 0) {
-      // Record an XP loss with the central game state so the HUD reflects it.
+      // Population hit zero — record a small biosphere-meter loss so the
+      // global HUD reflects the species' fall, then fire the run-complete
+      // action with won=false to grant the consolation XP/SD payout.
       recordSurvivalLoss(8);
+      recordSurviveRunComplete(false);
       setPhase('loss');
       return; // Early return — don't fall through to the win/result branches.
     }
     if (season >= SEASONS_TO_WIN) {
-      // Made it through all seasons with pop > 0. That's a win.
+      // Made it through all seasons with pop > 0. That's a win — biosphere
+      // bump for the meter, plus the full run-complete reward.
       recordSurvivalGain(12);
+      recordSurviveRunComplete(true);
       setPhase('win');
       return;
     }

@@ -13,15 +13,15 @@ import { useGameState } from '../hooks/useGameState';
 import './hud.css';
 
 export function HUD() {
-  // Pull the four pieces of state we display. We don't need any of the action
+  // Pull the pieces of state we display. We don't need any of the action
   // functions (recordSwipe etc.) here, so we don't destructure them.
-  const { level, collectedCount, streak, survival } = useGameState();
+  const { level, collectedCount, streak, survival, sandDollars } = useGameState();
 
   return (
     // <header> is the semantic HTML element for header content (top of page,
     // top of section, etc.). Better for accessibility than <div>.
     <header className="hud">
-      {/* --- Top row: brand + streak ------------------------------------- */}
+      {/* --- Top row: brand + chips ------------------------------------- */}
       <div className="hud-row hud-row--top">
         <div className="hud-brand">
           <span className="hud-logo">▶</span>
@@ -29,12 +29,23 @@ export function HUD() {
         </div>
 
         {/*
-          The `title` attribute shows a tooltip on hover (desktop). Mobile users
-          don't get the tooltip, but that's OK — the visual is self-explanatory.
+          The two chips on the right share a row. Sand Dollars sits to the
+          left of the streak chip — left-to-right reading order goes
+          "currency, then streak," which mirrors how players actually think
+          about their progress. The `title` attributes show tooltips on
+          hover (desktop only); mobile users get the visual which is
+          self-explanatory.
         */}
-        <div className="hud-streak" title="Daily streak">
-          <span className="hud-streak-flame">●</span>
-          <span className="hud-streak-num">{streak.count}</span>
+        <div className="hud-chip-group">
+          <div className="hud-chip" title="Sand Dollars">
+            <span className="hud-chip-mark hud-chip-mark--sd">◐</span>
+            <span className="hud-chip-num">{sandDollars}</span>
+          </div>
+
+          <div className="hud-chip" title="Daily streak">
+            <span className="hud-chip-mark hud-chip-mark--streak">●</span>
+            <span className="hud-chip-num">{streak.count}</span>
+          </div>
         </div>
       </div>
 

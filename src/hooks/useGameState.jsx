@@ -37,20 +37,25 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
  * exist without having to read every action function.
  *
  * State shape:
- *   xp:          number — total XP earned, drives "Field Level"
- *   streak:      { count, lastDay } — daily streak tracker
- *   collected:   { [speciesId]: { firstSeenAt, encounters, mastery } }
- *                mastery rises with correct quiz answers; powers the
- *                "fully documented" milestone shown in the Habitat view.
- *   survival:    number 0–100 — represents the global biosphere meter.
- *                Wrong answers in Quiz tick this down; right answers tick
- *                it up. The Survive mode also reads/writes it.
- *   stats:       running totals across all play sessions, useful for
- *                certificate predicates and the eventual stats screen.
- *   onboarded:   boolean — has the user finished the intro flow?
+ *   xp:           number — total XP earned, drives "Field Level"
+ *   sandDollars:  number — soft currency, earned alongside XP across all
+ *                 modes. Spent in the (future) shop on conservation actions.
+ *                 Mirrors XP roughly 1:1 by design — players don't have to
+ *                 think about two separate progress curves.
+ *   streak:       { count, lastDay } — daily streak tracker
+ *   collected:    { [speciesId]: { firstSeenAt, encounters, mastery } }
+ *                 mastery rises with correct quiz answers; powers the
+ *                 "fully documented" milestone shown in the Habitat view.
+ *   survival:     number 0–100 — represents the global biosphere meter.
+ *                 Wrong answers in Quiz tick this down; right answers tick
+ *                 it up. The Survive mode also reads/writes it.
+ *   stats:        running totals across all play sessions, useful for
+ *                 certificate predicates and the eventual stats screen.
+ *   onboarded:    boolean — has the user finished the intro flow?
  */
 const initialState = {
   xp: 0,
+  sandDollars: 0,
   streak: { count: 0, lastDay: null },
   collected: {},
   survival: 100,
@@ -61,6 +66,8 @@ const initialState = {
     quizCorrect: 0,
     quizWrong: 0,
     sessions: 0,
+    surviveRunsWon: 0,
+    surviveRunsLost: 0,
   },
   onboarded: false,
 };
@@ -227,6 +234,12 @@ export function GameStateProvider({ children }) {
    * @param speciesId — the id of the species they swiped
    * @param kept      — true if they swiped right (added to collection),
    *                    false if they swiped left (passed)
+   *
+   * Earnings (right-swipes only): +25 XP and +25 Sand Dollars for a first-time
+   * discovery, +5 XP and +5 SD for a re-encounter. The 1:1 mirror is
+   * intentional — a single mental model for "how much did that just give me."
+   * If we ever want SD to diverge from XP (a 2x SD weekend, a "double XP from
+   * quizzes" event), that lives here, not in the consuming modes.
    */
   const recordSwipe = useCallback(
     (speciesId, kept) => {
@@ -247,7 +260,9 @@ export function GameStateProvider({ children }) {
           // First-time discovery is worth more XP than re-encountering. This
           // shapes player behavior: encourages exploring new species over
           // grinding the same one repeatedly.
-          s.xp = s.xp + (existing ? 5 : 25);
+          const reward = existing ? 5 : 25;
+          s.xp = s.xp + reward;
+          s.sandDollars = s.sandDollars + reward;
         }
 
         // Either way, the user did something today, so update the streak.
@@ -260,8 +275,8 @@ export function GameStateProvider({ children }) {
 
   /**
    * recordSpeedID — called when the user answers a Speed-ID round.
-   * Right answers grant XP and increase mastery on the species; wrong
-   * answers just count toward the stats.
+   * Right answers grant XP, Sand Dollars (+10 each), and increase mastery
+   * on the species; wrong answers just count toward the stats.
    */
   const recordSpeedID = useCallback(
     (speciesId, correct) => {
@@ -274,6 +289,7 @@ export function GameStateProvider({ children }) {
 
         if (correct) {
           s.xp = s.xp + 10;
+          s.sandDollars = s.sandDollars + 10;
 
           // Bump mastery if we already have this species. Math.min ensures
           // mastery never exceeds 100 (the "fully documented" threshold).
@@ -296,7 +312,8 @@ export function GameStateProvider({ children }) {
   /**
    * recordQuiz — called when the user answers a Quiz question.
    * Quiz mastery gains are bigger than Speed-ID (12 vs 8) because quiz
-   * questions test deeper knowledge and we want to reward that.
+   * questions test deeper knowledge and we want to reward that. Sand Dollar
+   * earnings (+15) are also higher than Speed-ID for the same reason.
    */
   const recordQuiz = useCallback(
     (speciesId, correct) => {
@@ -309,6 +326,7 @@ export function GameStateProvider({ children }) {
 
         if (correct) {
           s.xp = s.xp + 15;
+          s.sandDollars = s.sandDollars + 15;
           const existing = s.collected[speciesId];
           if (existing) {
             s.collected = {
@@ -353,6 +371,42 @@ export function GameStateProvider({ children }) {
   );
 
   /**
+   * recordSurviveRunComplete — called once at the end of a Survive run.
+   *
+   * Until this action existed, finishing a Survive run granted nothing to
+   * XP or Sand Dollars — the only thing that moved was the global biosphere
+   * meter via recordSurvivalGain/Loss. That meant a six-event run rewarded
+   * the player less than two correct quiz questions, which made Survive feel
+   * unrewarding despite being the most emotionally heavy mode.
+   *
+   * @param won — true if the player completed all seasons with population > 0,
+   *              false if the species died out.
+   *
+   * Both outcomes grant *something*. A loss isn't a punishment — Survive is
+   * about real conservation pressures and most extinctions weren't avoidable
+   * by the player. The win/loss split is +60 / +15 to make a win feel earned
+   * without making a loss feel like wasted time. Stats counters (runsWon /
+   * runsLost) are bumped so future certificate predicates can read them.
+   */
+  const recordSurviveRunComplete = useCallback(
+    (won) => {
+      updateState((s) => {
+        const reward = won ? 60 : 15;
+        s.xp = s.xp + reward;
+        s.sandDollars = s.sandDollars + reward;
+        s.stats = {
+          ...s.stats,
+          surviveRunsWon: s.stats.surviveRunsWon + (won ? 1 : 0),
+          surviveRunsLost: s.stats.surviveRunsLost + (won ? 0 : 1),
+        };
+        s.streak = tickStreak(s.streak);
+        return s;
+      });
+    },
+    [updateState],
+  );
+
+  /**
    * markOnboarded — called when the user finishes the onboarding flow.
    * Flips the flag and bumps the session count.
    */
@@ -390,8 +444,27 @@ export function GameStateProvider({ children }) {
   // The full bundle that consumers will receive when they call useGameState().
   // We spread `state` in first to get all the raw values, then add derived
   // values and action functions on top.
+  //
+  // The `sandDollars` and `stats` defaults below are defensive: a player
+  // whose localStorage was written before these fields existed will load a
+  // state object that's missing them. Without these fallbacks the HUD chip
+  // would render `undefined` and certificate predicates that read stats
+  // counters would crash. The `?? 0` and `?? {}` operators only kick in when
+  // the value is null or undefined, so they're harmless when the fields exist.
   const value = {
     ...state,
+    sandDollars: state.sandDollars ?? 0,
+    stats: {
+      swipes: 0,
+      ids: 0,
+      idsCorrect: 0,
+      quizCorrect: 0,
+      quizWrong: 0,
+      sessions: 0,
+      surviveRunsWon: 0,
+      surviveRunsLost: 0,
+      ...(state.stats ?? {}),
+    },
     level,
     collectedCount,
     recordSwipe,
@@ -399,6 +472,7 @@ export function GameStateProvider({ children }) {
     recordQuiz,
     recordSurvivalLoss,
     recordSurvivalGain,
+    recordSurviveRunComplete,
     markOnboarded,
     reset,
   };
