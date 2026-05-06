@@ -5,11 +5,18 @@
  * biosphere meter. Visible in every mode (the parent App.jsx renders it
  * outside the mode swap, so it persists).
  *
+ * The Field Rank meter is also the entry point to the Credentials overlay:
+ * tap it and a fullscreen modal slides in showing every certificate (earned
+ * and unearned). That keeps the meta-loop visible without claiming a sixth
+ * slot on the bottom nav (Explore takes that slot).
+ *
  * This component reads from game state but never writes to it — all changes
  * come from the gameplay modes calling action functions on useGameState.
  */
 
+import { useState } from 'react';
 import { useGameState } from '../hooks/useGameState';
+import { Credentials } from './Credentials';
 import './hud.css';
 
 export function HUD() {
@@ -17,9 +24,19 @@ export function HUD() {
   // functions (recordSwipe etc.) here, so we don't destructure them.
   const { level, collectedCount, streak, survival, sandDollars } = useGameState();
 
+  // Local state for the Credentials overlay. Lives here (not in App or in
+  // useGameState) because no other component needs to know about it — only
+  // the HUD opens it, and only the overlay closes itself.
+  const [credsOpen, setCredsOpen] = useState(false);
+
   return (
-    // <header> is the semantic HTML element for header content (top of page,
-    // top of section, etc.). Better for accessibility than <div>.
+    // Fragment (`<>...</>`) groups the header and the overlay without
+    // adding a DOM wrapper. The HUD itself stays a sticky header; the
+    // overlay is rendered as a sibling so its `position: fixed` covers
+    // the whole viewport regardless of where the HUD sits.
+    <>
+    {/* <header> is the semantic HTML element for header content (top of page,
+        top of section, etc.). Better for accessibility than <div>. */}
     <header className="hud">
       {/* --- Top row: brand + chips ------------------------------------- */}
       <div className="hud-row hud-row--top">
@@ -52,8 +69,19 @@ export function HUD() {
       {/* --- Meters row: rank progress + biosphere health ---------------- */}
       <div className="hud-row hud-row--meters">
 
-        {/* Rank meter — XP progress to the next field rank. */}
-        <div className="hud-meter" title="Field Rank">
+        {/* Rank meter — XP progress to the next field rank. Also the
+            entry point to the Credentials overlay. We use a <button> here
+            (not a <div>) so it's keyboard-reachable and announces itself
+            to screen readers. The styling in hud.css strips the default
+            button chrome to keep the visual identical to a non-clickable
+            meter. */}
+        <button
+          type="button"
+          className="hud-meter hud-meter--button"
+          title="Field Rank — view credentials"
+          onClick={() => setCredsOpen(true)}
+          aria-label={`Field rank ${level.name}. Open credentials.`}
+        >
           <div className="hud-meter-label">
             <span className="eyebrow">Field rank</span>
             <span className="hud-rank">{level.name}</span>
@@ -83,7 +111,7 @@ export function HUD() {
             */}
             <span>{level.capped ? 'Top rank' : `${level.xpToNext} XP to next`}</span>
           </div>
-        </div>
+        </button>
 
         {/* Biosphere meter — the global ecosystem health 0–100. */}
         <div className="hud-meter" title="Ecosystem health">
@@ -134,5 +162,11 @@ export function HUD() {
         </div>
       </div>
     </header>
+
+    {/* The Credentials overlay. Rendered as a sibling so its fixed
+        positioning covers the whole viewport. The component itself returns
+        null when `open` is false, so this is cheap when closed. */}
+    <Credentials open={credsOpen} onClose={() => setCredsOpen(false)} />
+    </>
   );
 }

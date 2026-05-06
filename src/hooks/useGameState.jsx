@@ -27,31 +27,45 @@
 //   - useMemo: caches a computed value so it only recomputes when its inputs change
 //   - useCallback: caches a function reference so child components don't re-render
 //                  every time the parent re-renders (referential stability)
-import { createContext, useContext, useMemo, useCallback } from 'react';
+//   - useEffect: runs a function after render (for side effects — here, evaluating
+//                certificate predicates whenever state changes)
+import { createContext, useContext, useMemo, useCallback, useEffect } from 'react';
 
 // Our own custom hook for state that persists to localStorage.
 import { useLocalStorage } from '../hooks/useLocalStorage';
+
+// The species catalog — predicates that reason about biome coverage need this.
+import { SPECIES } from '../data/species';
+
+// Certificate definitions and the pure evaluator. The provider re-runs the
+// evaluator after state changes and grants any newly-true certs.
+import { evaluateCertificates } from '../data/certificates';
 
 /**
  * The shape of game state. Documented here so it's easy to see what fields
  * exist without having to read every action function.
  *
  * State shape:
- *   xp:           number — total XP earned, drives "Field Level"
- *   sandDollars:  number — soft currency, earned alongside XP across all
- *                 modes. Spent in the (future) shop on conservation actions.
- *                 Mirrors XP roughly 1:1 by design — players don't have to
- *                 think about two separate progress curves.
- *   streak:       { count, lastDay } — daily streak tracker
- *   collected:    { [speciesId]: { firstSeenAt, encounters, mastery } }
- *                 mastery rises with correct quiz answers; powers the
- *                 "fully documented" milestone shown in the Habitat view.
- *   survival:     number 0–100 — represents the global biosphere meter.
- *                 Wrong answers in Quiz tick this down; right answers tick
- *                 it up. The Survive mode also reads/writes it.
- *   stats:        running totals across all play sessions, useful for
- *                 certificate predicates and the eventual stats screen.
- *   onboarded:    boolean — has the user finished the intro flow?
+ *   xp:                  number — total XP earned, drives "Field Level"
+ *   sandDollars:         number — soft currency, earned alongside XP across
+ *                        all modes. Spent in the (future) shop on
+ *                        conservation actions. Mirrors XP roughly 1:1 by
+ *                        design — players don't have to think about two
+ *                        separate progress curves.
+ *   streak:              { count, lastDay } — daily streak tracker
+ *   collected:           { [speciesId]: { firstSeenAt, encounters, mastery } }
+ *                        mastery rises with correct quiz answers; powers the
+ *                        "fully documented" milestone shown in the Habitat view.
+ *   survival:            number 0–100 — represents the global biosphere meter.
+ *                        Wrong answers in Quiz tick this down; right answers
+ *                        tick it up. The Survive mode also reads/writes it.
+ *   stats:               running totals across all play sessions, useful for
+ *                        certificate predicates and the eventual stats screen.
+ *   earnedCertificates:  { [certId]: timestamp } — paper artifacts the player
+ *                        has earned. Granted by a useEffect that re-runs every
+ *                        certificate predicate after each state change. Once
+ *                        granted, never revoked.
+ *   onboarded:           boolean — has the user finished the intro flow?
  */
 const initialState = {
   xp: 0,
@@ -69,6 +83,7 @@ const initialState = {
     surviveRunsWon: 0,
     surviveRunsLost: 0,
   },
+  earnedCertificates: {},
   onboarded: false,
 };
 
@@ -227,6 +242,57 @@ export function GameStateProvider({ children }) {
     },
     [setState],
   );
+
+  /**
+   * Certificate evaluator effect.
+   *
+   * Runs after every render where `state` changed. Re-evaluates every
+   * certificate predicate against the current state and merges any newly-
+   * earned certs into `state.earnedCertificates`.
+   *
+   * IMPORTANT DESIGN POINTS
+   *  - Grants only. We never remove a cert here, even if a predicate flickers
+   *    false (e.g. a hypothetical "data migration" that resets a stat).
+   *    Earning is permanent.
+   *  - Idempotent. If no new certs qualify, we don't call setState — that's
+   *    what prevents an infinite render loop. The check is a simple "do we
+   *    have at least one new key?"
+   *  - Pure evaluator. The certificates module exports `evaluateCertificates`
+   *    as a pure function. This effect is the only place that mutates state
+   *    based on its result; everything else can call the evaluator for
+   *    read-only purposes.
+   *
+   * The dep array contains `state` directly. That means this effect re-runs
+   * after every state change — even ones that can't possibly grant a cert
+   * (like flipping `onboarded`). That's fine: the evaluator is cheap (under
+   * twenty predicates against a small state object) and the no-new-grants
+   * early return makes those calls free.
+   */
+  useEffect(() => {
+    const candidate = evaluateCertificates(state, SPECIES);
+    const current = state.earnedCertificates ?? {};
+
+    // Find any cert ids in `candidate` that aren't already in `current`.
+    // for...in would also work; for...of with Object.keys gives us a clearer
+    // intent (we're iterating ids, not enumerating object props).
+    const newlyEarned = {};
+    let hasAny = false;
+    for (const id of Object.keys(candidate)) {
+      if (!(id in current)) {
+        newlyEarned[id] = candidate[id];
+        hasAny = true;
+      }
+    }
+
+    // No new grants → bail. Crucial: without this check we'd loop forever,
+    // because every setState would re-trigger this effect.
+    if (!hasAny) return;
+
+    setState((prev) => ({
+      ...prev,
+      earnedCertificates: { ...(prev.earnedCertificates ?? {}), ...newlyEarned },
+    }));
+  }, [state, setState]);
 
   /**
    * recordSwipe — called when the user swipes a species card in Swipe mode.
@@ -454,6 +520,7 @@ export function GameStateProvider({ children }) {
   const value = {
     ...state,
     sandDollars: state.sandDollars ?? 0,
+    earnedCertificates: state.earnedCertificates ?? {},
     stats: {
       swipes: 0,
       ids: 0,
